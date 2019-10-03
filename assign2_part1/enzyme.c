@@ -17,26 +17,53 @@ void *run_enzyme(void *data) {
 		If "use_yield" is nonzero then call pthread_yield at the end of the loop.
 	7. Return a pointer to the updated structure.
 	*/
-	while(0) {
-		sched_yield();
+       	int cancel_state;
+	thread_info_t *dt = (struct thread_info_t*) data; 
+	dt->swapcount = 0;
+	cancel_state = pthread_setcancelstate(PTHREAD_CANCEL_ASYNCHRONOUS,NULL);//thread can be canceled at any time
+	if(dt->string[0]=='C')
+	{
+		//printf("CANCEL ENTERED.");
+		pthread_cancel(pthread_self());
+	}
+	while(please_quit==0) {
+
+		if(dt->string[0]>dt->string[1])
+		{
+			printf("String before:%s \n",dt->string);
+			char temp = dt->string[0];
+			dt->string[0] = dt->string[1];
+			dt->string[1] = temp;
+			workperformed = 1;
+			dt->swapcount++;		
+			printf("String after:%s \n",dt->string);
+		}
+		if(use_yield != 0)
+		{
+			sched_yield();
+		}
 	};
-	return NULL;
+	return dt;
 }
 
 
 // Make threads to sort string.
 // Returns the number of threads created.
 // There is a memory bug in this function.
+// enzymes[] stores thread ID, string is a string to be swapped, fp is and function to be run 
 int make_enzyme_threads(pthread_t * enzymes, char *string, void *(*fp)(void *)) {
 	int i,rv,len;
-	thread_info_t *info;
+	thread_info_t *info;	//declaring ponter to struct thread_info_t 
 	len = strlen(string);
-	info = (thread_info_t *)malloc(sizeof(thread_info_t));
-
+	info = (thread_info_t *)malloc(sizeof(thread_info_t));	//allocating memory for info 
+	//printf("make_enzyme string: %s\n",string);
+	//printf("make_enzyme string+1: %s\n",string+1);
 	for(i=0;i<len-1;i++) {
+	    //printf("make_enzyme string+1: %s\n",string+i);
 	    info->string = string+i;
 	    rv = pthread_create(enzymes+i,NULL,fp,info);
-	    if (rv) {
+	    //Thread created. Stores ID to enzyme[i],default attribute, passes info to enzymerun 
+	    if (rv) {   //pthread_create returns 0 for successful completion otherwise non zero 
 	        fprintf(stderr,"Could not create thread %d : %s\n",
 			i,strerror(rv));
 		exit(1);
@@ -58,7 +85,7 @@ int join_on_enzymes(pthread_t *threads, int n) {
 	for(i=0;i<n;i++) {
 	    void *status;
 	    int rv = pthread_join(threads[i],&status);
-
+	    // whatgoeshere = rv;
         if(whatgoeshere) {
 	    fprintf(stderr,"Can't join thread %d:%s.\n",i,strerror(rv));
 	    continue;
@@ -85,7 +112,7 @@ so that the string temporarily is in order because the swap is not complete.
 void wait_till_done(char *string, int n) {
 	int i;
 	while(1) {
-	    sched_yield();
+	    sched_yield();	//stops executing current thread, places itself to the end of queue and lets new thread  to run
 	    workperformed=0;
 	    for(i=0;i<n;i++) 
 	        if (string[i] > string[i+1]) {
@@ -104,21 +131,21 @@ void * sleeper_func(void *p) {
 }
 
 int smp2_main(int argc, char **argv) {
-	pthread_t enzymes[MAX];
-	int n,totalswap;
+	pthread_t enzymes[MAX]; //creating thread named enzyme;
+	int n,totalswap;	
 	char string[MAX];
-
+	
 	if (argc <= 1) {
 	    fprintf(stderr,"Usage: %s <word>\n",argv[0]);
 	    exit(1);
 	}
 	strncpy(string,argv[1],MAX); // Why is this necessary? Why cant we give argv[1] directly to the thread functions?
-
+	
 	please_quit = 0;
 	use_yield =1;
 	
 	printf("Creating threads...\n");
-	n = make_enzyme_threads(enzymes,string,run_enzyme);
+	n = make_enzyme_threads(enzymes,string,run_enzyme); //
 	printf("Done creating %d threads.\n",n);
 	
 	pthread_t sleeperid;

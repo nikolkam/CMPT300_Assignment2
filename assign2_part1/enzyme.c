@@ -20,23 +20,22 @@ void *run_enzyme(void *data) {
        	int cancel_state;
 	thread_info_t *dt = (struct thread_info_t*) data; 
 	dt->swapcount = 0;
-	cancel_state = pthread_setcancelstate(PTHREAD_CANCEL_ASYNCHRONOUS,NULL);//thread can be canceled at any time
+	cancel_state = pthread_setcancelstate(PTHREAD_CANCEL_ASYNCHRONOUS,NULL);//Set the thread to be canceled at any time
 	if(dt->string[0]=='C')
 	{
-		//printf("CANCEL ENTERED.");
 		pthread_cancel(pthread_self());
 	}
 	while(please_quit==0) {
 
 		if(dt->string[0]>dt->string[1])
 		{
-			printf("String before:%s \n",dt->string);
+			//printf("String before:%s \n",dt->string);
 			char temp = dt->string[0];
 			dt->string[0] = dt->string[1];
 			dt->string[1] = temp;
 			workperformed = 1;
 			dt->swapcount++;		
-			printf("String after:%s \n",dt->string);
+			//printf("String after:%s \n",dt->string);
 		}
 		if(use_yield != 0)
 		{
@@ -55,11 +54,9 @@ int make_enzyme_threads(pthread_t * enzymes, char *string, void *(*fp)(void *)) 
 	int i,rv,len;
 	thread_info_t *info;	//declaring ponter to struct thread_info_t 
 	len = strlen(string);
-	info = (thread_info_t *)malloc(sizeof(thread_info_t));	//allocating memory for info 
-	//printf("make_enzyme string: %s\n",string);
-	//printf("make_enzyme string+1: %s\n",string+1);
+
 	for(i=0;i<len-1;i++) {
-	    //printf("make_enzyme string+1: %s\n",string+i);
+	    info = (thread_info_t *)malloc(sizeof(thread_info_t));	//allocating memory for info 
 	    info->string = string+i;
 	    rv = pthread_create(enzymes+i,NULL,fp,info);
 	    //Thread created. Stores ID to enzyme[i],default attribute, passes info to enzymerun 
@@ -86,19 +83,28 @@ int join_on_enzymes(pthread_t *threads, int n) {
 	    void *status;
 	    int rv = pthread_join(threads[i],&status);
 	    // whatgoeshere = rv;
-        if(whatgoeshere) {
+	
+	
+        if(rv) {
 	    fprintf(stderr,"Can't join thread %d:%s.\n",i,strerror(rv));
 	    continue;
 	}
-
-	if ((void*)whatgoeshere == PTHREAD_CANCELED) {
+	/*		
+        if(whatgoeshre) {
+	    fprintf(stderr,"Can't join thread %d:%s.\n",i,strerror(rv));
+	    continue;
+	}
+	*/
+	if ((void*)status == PTHREAD_CANCELED) {
 	    continue;
 	} else if (status == NULL) {
 	    printf("Thread %d did not return anything\n",i);
 	    } else {
 	      printf("Thread %d exited normally: ",i);// Don't change this line
-	      int threadswapcount = whatgoeshere; 
+	      //int threadswapcount = ((struct thread_info_t*) status).swapcount ; 
+	      thread_info_t *dt = (struct thread_t*) status;
 	      // Hint - you will need to cast something.
+	      int threadswapcount = dt->swapcount;
 	      printf("%d swaps.\n",threadswapcount); // Don't change this line
 	      totalswapcount += threadswapcount;// Don't change this line
 	    }

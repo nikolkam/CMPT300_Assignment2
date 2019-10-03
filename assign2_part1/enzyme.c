@@ -17,13 +17,14 @@ void *run_enzyme(void *data) {
 		If "use_yield" is nonzero then call pthread_yield at the end of the loop.
 	7. Return a pointer to the updated structure.
 	*/
-       	int cancel_state;
-	thread_info_t *dt = (struct thread_info_t*) data; 
+
+	thread_info_t *dt = (thread_info_t*) data; 
 	dt->swapcount = 0;
-	cancel_state = pthread_setcancelstate(PTHREAD_CANCEL_ASYNCHRONOUS,NULL);//Set the thread to be canceled at any time
+	pthread_setcancelstate(PTHREAD_CANCEL_ASYNCHRONOUS,NULL);//Set the thread to be canceled at any time
 	if(dt->string[0]=='C')
 	{
 		pthread_cancel(pthread_self());
+		return PTHREAD_CANCELED; 
 	}
 	while(please_quit==0) {
 

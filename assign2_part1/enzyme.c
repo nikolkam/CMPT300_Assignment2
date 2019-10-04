@@ -5,6 +5,7 @@ int use_yield;
 int workperformed;
 
 // The code each enzyme executes.
+
 void *run_enzyme(void *data) {
 	/* This function should :
 	1. cast the void* pointer to thread_info_t*
@@ -17,35 +18,54 @@ void *run_enzyme(void *data) {
 		If "use_yield" is nonzero then call pthread_yield at the end of the loop.
 	7. Return a pointer to the updated structure.
 	*/
-
-	thread_info_t *dt = (thread_info_t*) data; 
-	dt->swapcount = 0;
+	/*
+	((thread_info_t*) data)-> swapcount = 0;
 	pthread_setcancelstate(PTHREAD_CANCEL_ASYNCHRONOUS,NULL);//Set the thread to be canceled at any time
-	if(dt->string[0]=='C')
+	if(((thread_info_t*) data)->string[0]=='C')
 	{
 		pthread_cancel(pthread_self());
 		return PTHREAD_CANCELED; 
 	}
 	while(please_quit==0) {
-
-		if(dt->string[0]>dt->string[1])
+		if(((thread_info_t*)data)->string[0]>((thread_info_t*)data)->string[1])
 		{
-			//printf("String before:%s \n",dt->string);
-			char temp = dt->string[0];
-			dt->string[0] = dt->string[1];
-			dt->string[1] = temp;
+			char temp = ((thread_info_t*)data)->string[0];
+			((thread_info_t*)data)->string[0] = ((thread_info_t*)data)->string[1];
+			((thread_info_t*)data)->string[1] = temp;
 			workperformed = 1;
-			dt->swapcount++;		
-			//printf("String after:%s \n",dt->string);
+			((thread_info_t*)data)->swapcount++;		
 		}
 		if(use_yield != 0)
 		{
 			sched_yield();
 		}
 	};
-	return dt;
-}
+	//printf("SWP: %d \n",((thread_info_t *) data)->swapcount);
+	return (void *)data;
+	*/
+	thread_info_t* info = (thread_info_t *) data;
+	info->swapcount = 0;
+	int oldstate;
+	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &oldstate);
+	char* str = info->string;
+	if(str[0] == 'C') {
+		pthread_cancel(pthread_self());
+	}
 
+	while(!please_quit) {
+		if(str[0] > str[1]) {
+			workperformed = 1;
+			info->swapcount++;
+			char tmp = str[1];
+			str[1] = str[0];
+			str[0] = tmp;
+		}
+		if(use_yield != 0) {
+			sched_yield();
+		}
+	}
+	return (void *)info;
+}
 
 // Make threads to sort string.
 // Returns the number of threads created.
@@ -66,7 +86,7 @@ int make_enzyme_threads(pthread_t * enzymes, char *string, void *(*fp)(void *)) 
 			i,strerror(rv));
 		exit(1);
 	    }
-	}  
+	} 	
 	return len-1;
 }
 
@@ -78,34 +98,24 @@ int make_enzyme_threads(pthread_t * enzymes, char *string, void *(*fp)(void *)) 
 int join_on_enzymes(pthread_t *threads, int n) {
 	int i;
 	int totalswapcount = 0;
-	int whatgoeshere=0; // just to make the code compile 
-	                    // you will need to edit the code below
 	for(i=0;i<n;i++) {
 	    void *status;
 	    int rv = pthread_join(threads[i],&status);
-	    // whatgoeshere = rv;
 	
 	
         if(rv) {
 	    fprintf(stderr,"Can't join thread %d:%s.\n",i,strerror(rv));
 	    continue;
 	}
-	/*		
-        if(whatgoeshre) {
-	    fprintf(stderr,"Can't join thread %d:%s.\n",i,strerror(rv));
-	    continue;
-	}
-	*/
+	
 	if ((void*)status == PTHREAD_CANCELED) {
 	    continue;
 	} else if (status == NULL) {
 	    printf("Thread %d did not return anything\n",i);
 	    } else {
 	      printf("Thread %d exited normally: ",i);// Don't change this line
-	      //int threadswapcount = ((struct thread_info_t*) status).swapcount ; 
-	      thread_info_t *dt = (struct thread_t*) status;
 	      // Hint - you will need to cast something.
-	      int threadswapcount = dt->swapcount;
+	      int threadswapcount = ((thread_info_t*)status)->swapcount;
 	      printf("%d swaps.\n",threadswapcount); // Don't change this line
 	      totalswapcount += threadswapcount;// Don't change this line
 	    }
@@ -151,6 +161,9 @@ int smp2_main(int argc, char **argv) {
 	please_quit = 0;
 	use_yield =1;
 	
+	//TEST
+		
+	//TEST END
 	printf("Creating threads...\n");
 	n = make_enzyme_threads(enzymes,string,run_enzyme); //
 	printf("Done creating %d threads.\n",n);

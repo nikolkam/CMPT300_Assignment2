@@ -18,53 +18,34 @@ void *run_enzyme(void *data) {
 		If "use_yield" is nonzero then call pthread_yield at the end of the loop.
 	7. Return a pointer to the updated structure.
 	*/
-	/*
-	((thread_info_t*) data)-> swapcount = 0;
+	
+
 	pthread_setcancelstate(PTHREAD_CANCEL_ASYNCHRONOUS,NULL);//Set the thread to be canceled at any time
-	if(((thread_info_t*) data)->string[0]=='C')
+	//thread_info_t *dt = (thread_info_t *)malloc(sizeof(thread_info_t));		
+	thread_info_t *dt = (thread_info_t *) data;
+	dt -> swapcount = 0;
+	if(dt->string[0]=='C')
 	{
 		pthread_cancel(pthread_self());
-		return PTHREAD_CANCELED; 
+		return PTHREAD_CANCELED;
 	}
 	while(please_quit==0) {
-		if(((thread_info_t*)data)->string[0]>((thread_info_t*)data)->string[1])
-		{
-			char temp = ((thread_info_t*)data)->string[0];
-			((thread_info_t*)data)->string[0] = ((thread_info_t*)data)->string[1];
-			((thread_info_t*)data)->string[1] = temp;
+		if(dt->string[0]>dt->string[1])
+		{	
 			workperformed = 1;
-			((thread_info_t*)data)->swapcount++;		
+			dt->swapcount ++;
+			char temp = dt->string[0];
+			dt->string[0] = dt->string[1];
+			dt ->string[1] = temp;
 		}
 		if(use_yield != 0)
 		{
 			sched_yield();
 		}
 	};
-	//printf("SWP: %d \n",((thread_info_t *) data)->swapcount);
-	return (void *)data;
-	*/
-	thread_info_t* info = (thread_info_t *) data;
-	info->swapcount = 0;
-	int oldstate;
-	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &oldstate);
-	char* str = info->string;
-	if(str[0] == 'C') {
-		pthread_cancel(pthread_self());
-	}
-
-	while(!please_quit) {
-		if(str[0] > str[1]) {
-			workperformed = 1;
-			info->swapcount++;
-			char tmp = str[1];
-			str[1] = str[0];
-			str[0] = tmp;
-		}
-		if(use_yield != 0) {
-			sched_yield();
-		}
-	}
-	return (void *)info;
+	printf("String: %s \n",((thread_info_t*) data)->string);	
+	printf("Swap: %d \n",((thread_info_t*) data)->swapcount);
+	return (void *)dt;
 }
 
 // Make threads to sort string.

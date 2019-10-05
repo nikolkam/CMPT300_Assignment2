@@ -61,8 +61,8 @@ void *adder(void *arg)
     int value1, value2;
     int startOffset, remainderOffset;
     int i;
-
-    return NULL; /* remove this line */
+    printf("ADDER\n");
+    //return NULL; /* remove this line */
 
     while (1) {
 	startOffset = remainderOffset = -1;
@@ -79,9 +79,48 @@ void *adder(void *arg)
 	    // do we have value1 already?  If not, is this a "naked" number?
 	    // if we do, is the next character after it a '+'?
 	    // if so, is the next one a "naked" number?
-
 	    // once we have value1, value2 and start and end offsets of the
 	    // expression in buffer, replace it with v1+v2
+	    if(isNumeric(buffer[i]))
+	    {
+		    printf("%c :number detected\n",buffer[i]);
+		    int j = 0;
+		    char val [bufferlen];
+		    val[j] = buffer[i]; 
+		    while(isNumeric(buffer[++i]))
+		    {
+			    val[j] = buffer[i];
+			    j++;
+		    }
+		    val[j] = '\0';
+		    if(value1 == -1)
+		    {
+			    value1 = string2int(val);
+		    }
+		    else if(value2 == -1)
+		    {
+			    value2 = string2int(val);
+		    }
+	    }
+	    else if(buffer[i] == '+')
+	    {
+		    printf("+ detected\n");
+		    if(val1 !=-1 && val2 !=-1)
+		    {
+			    printf("Result: %d \n");
+			    break;
+		    }
+	    }
+	    else if(buffer[i] == '(' || ')')
+	    {
+		    printf("%c Grouping detected\n",buffer[i]);
+
+	    }
+	    else
+	    {
+		    //thread
+		    printf("%c other expression detected. \n",buffer[i]);
+	    }
 	}
 
 	// something missing?
@@ -98,8 +137,8 @@ void *multiplier(void *arg)
     int value1, value2;
     int startOffset, remainderOffset;
     int i;
-
-    return NULL; /* remove this line */
+    printf("MULTIPLIER\n");
+    //return NULL; /* remove this line */
 
     while (1) {
 	startOffset = remainderOffset = -1;
@@ -128,8 +167,8 @@ void *degrouper(void *arg)
 {
     int bufferlen;
     int i;
-
-    return NULL; /* remove this line */
+    printf("DEGROUPER\n");
+    //return NULL; /* remove this line */
 
     while (1) {
 
@@ -161,8 +200,8 @@ void *sentinel(void *arg)
     char numberBuffer[20];
     int bufferlen;
     int i;
-
-    return NULL; /* remove this line */
+    printf("SENTINEL\n");
+    //return NULL; /* remove this line */
 
     while (1) {
 
@@ -206,9 +245,9 @@ void *reader(void *arg)
 	int currentlen;
 	int newlen;
 	int free;
-
+	printf("READER\n");
 	fgets(tBuffer, sizeof(tBuffer), stdin);
-
+	
 	/* Sychronization bugs in remainder of function need to be fixed */
 
 	newlen = strlen(tBuffer);
@@ -258,9 +297,9 @@ int smp3_main(int argc, char **argv)
     pthread_detach(multiplierThread);
     pthread_detach(adderThread);
     pthread_detach(degrouperThread);
-    pthread_detach(sentinelThread);
-    pthread_detach(readerThread);
-
+    pthread_detach(readerThread);	
+    pthread_join(sentinelThread,NULL);
+    
     /* everything is finished, print out the number of operations performed */
     fprintf(stdout, "Performed a total of %d operations\n", num_ops);
     return EXIT_SUCCESS;

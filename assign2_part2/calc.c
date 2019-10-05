@@ -96,16 +96,17 @@ void *adder(void *arg)
 		    if(value1 == -1)
 		    {
 			    value1 = string2int(val);
+		    	    if(buffer[i+1]=='+')
+			    {
+
+			    }
 		    }
-		    else if(value2 == -1)
-		    {
-			    value2 = string2int(val);
-		    }
+		    
 	    }
 	    else if(buffer[i] == '+')
 	    {
 		    printf("+ detected\n");
-		    if(val1 !=-1 && val2 !=-1)
+		    if(value1 !=-1 && value2 !=-1)
 		    {
 			    printf("Result: %d \n");
 			    break;
@@ -124,6 +125,7 @@ void *adder(void *arg)
 	}
 
 	// something missing?
+	break;
     }
 }
 
@@ -149,6 +151,7 @@ void *multiplier(void *arg)
 	}
 
 	/* storing this prevents having to recalculate it in the loop */
+	bufferlen = strlen(buffer);
 	bufferlen = strlen(buffer);
 
 	for (i = 0; i < bufferlen; i++) {
@@ -303,4 +306,5 @@ int smp3_main(int argc, char **argv)
     /* everything is finished, print out the number of operations performed */
     fprintf(stdout, "Performed a total of %d operations\n", num_ops);
     return EXIT_SUCCESS;
+
 }

@@ -62,7 +62,6 @@ void *adder(void *arg)
     int startOffset, remainderOffset;
     int i;
     printf("ADDER\n");
-    //return NULL; /* remove this line */
 
     while (1) {
 	startOffset = remainderOffset = -1;
@@ -70,11 +69,13 @@ void *adder(void *arg)
 
 	if (timeToFinish()) {
 	    return NULL;
-	}
+	}	
 
+	while(buffer[0]==';')
+        {}	
 	/* storing this prevents having to recalculate it in the loop */
 	bufferlen = strlen(buffer);
-	char val1 = [bufferlen] ,val2[bufferlen];
+	char val1[bufferlen] ,val2[bufferlen];
 	int index1 = 0,index2 = 0;
 	int afterPlus = 0;
 	for (i = 0; i < bufferlen; i++) {
@@ -102,53 +103,13 @@ void *adder(void *arg)
 			    index1 ++;
 		    }
 	    }
-	    else if(buffer[i] == '+')
-	    {
-		    afterPlus = 1;
-		    if(index1 == 0)
-		    {
-			    printf("Error:No number before '+' sign.\n");
-			    return NULL;
-		    }
-		    else if(index2 == 0)
-		    {
-			    continue;
-		    }
-		    else
-		    {
-			    remainderOffset = i-1;
-			    value1 = string2int(val1);
-			    value2 = string2int(val2);
-			    int total = value1 + value2;
-			    char number[20];
-			    int2string(total,number);
-			    strcpy(buffer,&buffer[i]);
-			    strcat(number,buffer);
-			    printf("ADD RESULT: %s \n",number);
-		    }
-
-		    if(afterPlus == 1)
-		    {
-			    remainderOffset = i-1;
-			    value1 = string2int(val1);
-			    value2 = string2int(val2);
-			    int total = value1 + value2;
-			    char number[20];
-			    int2string(total,number);
-			    strcpy(buffer,&buffer[i]);
-			    strcat(number,buffer);
-			    printf("ADD RESULT: %s \n",number);
-		    }
-		    else
-		    {
-			    
-		    }
-	    }
-	    else
+	    else 
 	    {
 		    if(index1 != 0 && index2 != 0)
 		    {
 			    remainderOffset = i-1;
+			    val1[index1+1] = '\0';
+			    val2[index2+1] = '\0';
 			    value1 = string2int(val1);
 			    value2 = string2int(val2);
 			    int total = value1 + value2;
@@ -157,52 +118,23 @@ void *adder(void *arg)
 			    strcpy(buffer,&buffer[i]);
 			    strcat(number,buffer);
 			    printf("ADD RESULT: %s \n",number);
+			    index1,index2 = 0;
 		    }
-
-
-
-
-
-
-
-
-		    /*
-
-
-		    printf("%c :number detected\n",buffer[i]);
-		    int j = 0;
-		    char val1 [bufferlen-i];
-		    val1[j] = buffer[i]; 
-		    while(isNumeric(buffer[++i]) && i<bufferlen)
+		    else if(index1 == 0)
 		    {
-			    val1[j] = buffer[i];
-			    j++;
+			    printf("Non numerical number before sign.");
+			    break;
 		    }
-		    if(buffer[i]=='+')
+		    else if(buffer[i] == '+')
 		    {
-			char val2 [bufferlen-i];
-		    	value1 = string2int(val1);
-			j = 0;
-			while(isNumeric(++i))
-			{
-				val2[j] = buffer[i];
-				j++;
-			}
-			value2 = string2int(val2);
-	    	    }
+			    afterPlus = 1;
+
+		    }
 		    else if(buffer[i] == ';')
 		    {
-			    if(i == bufferlen + 1)
-			    {
-				    printf("DONE\n");
-
-			    }
-			    
+			    break;
 		    }
-		    int total = value1 + value2;
-		    printf("TOTAL: %d \n",total);
-	   	*/
-	   // }
+	    }
 	
 	   // if(buffer[i] == )
 	// something missing?
@@ -295,6 +227,8 @@ void *sentinel(void *arg)
 	if (timeToFinish()) {
 	    return NULL;
 	}
+	while(buffer[0]==';')
+	{}
 
 	/* storing this prevents having to recalculate it in the loop */
 	bufferlen = strlen(buffer);
@@ -318,7 +252,7 @@ void *sentinel(void *arg)
 		numberBuffer[i] = buffer[i];
 	    }
 	}
-
+	sched_yield();
 	// something missing?
     }
 }

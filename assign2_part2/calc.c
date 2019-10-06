@@ -74,7 +74,9 @@ void *adder(void *arg)
 
 	/* storing this prevents having to recalculate it in the loop */
 	bufferlen = strlen(buffer);
-
+	char val1 = [bufferlen] ,val2[bufferlen];
+	int index1 = 0,index2 = 0;
+	int afterPlus = 0;
 	for (i = 0; i < bufferlen; i++) {
 	    // do we have value1 already?  If not, is this a "naked" number?
 	    // if we do, is the next character after it a '+'?
@@ -83,52 +85,131 @@ void *adder(void *arg)
 	    // expression in buffer, replace it with v1+v2
 	    if(isNumeric(buffer[i]))
 	    {
-		    printf("%c :number detected\n",buffer[i]);
-		    int j = 0;
-		    char val [bufferlen];
-		    val[j] = buffer[i]; 
-		    while(isNumeric(buffer[++i]))
+		    if(startOffset == -1)
 		    {
-			    val[j] = buffer[i];
-			    j++;
+			    startOffset = i;
 		    }
-		    val[j] = '\0';
-		    if(value1 == -1)
+		    //It's a numerical value and before +
+		    if(afterPlus)
 		    {
-			    value1 = string2int(val);
-		    	    if(buffer[i+1]=='+')
-			    {
-
-			    }
+			    val2[index2] = buffer[i];
+			    index2 ++;
 		    }
-		    
+		    //It's a numerical value and after + 
+		    else
+		    {
+			    val1[index1] = buffer[i];
+			    index1 ++;
+		    }
 	    }
 	    else if(buffer[i] == '+')
 	    {
-		    printf("+ detected\n");
-		    if(value1 !=-1 && value2 !=-1)
+		    afterPlus = 1;
+		    if(index1 == 0)
 		    {
-			    printf("Result: %d \n");
-			    break;
+			    printf("Error:No number before '+' sign.\n");
+			    return NULL;
 		    }
-	    }
-	    else if(buffer[i] == '(' || ')')
-	    {
-		    printf("%c Grouping detected\n",buffer[i]);
+		    else if(index2 == 0)
+		    {
+			    continue;
+		    }
+		    else
+		    {
+			    remainderOffset = i-1;
+			    value1 = string2int(val1);
+			    value2 = string2int(val2);
+			    int total = value1 + value2;
+			    char number[20];
+			    int2string(total,number);
+			    strcpy(buffer,&buffer[i]);
+			    strcat(number,buffer);
+			    printf("ADD RESULT: %s \n",number);
+		    }
 
+		    if(afterPlus == 1)
+		    {
+			    remainderOffset = i-1;
+			    value1 = string2int(val1);
+			    value2 = string2int(val2);
+			    int total = value1 + value2;
+			    char number[20];
+			    int2string(total,number);
+			    strcpy(buffer,&buffer[i]);
+			    strcat(number,buffer);
+			    printf("ADD RESULT: %s \n",number);
+		    }
+		    else
+		    {
+			    
+		    }
 	    }
 	    else
 	    {
-		    //thread
-		    printf("%c other expression detected. \n",buffer[i]);
-	    }
-	}
+		    if(index1 != 0 && index2 != 0)
+		    {
+			    remainderOffset = i-1;
+			    value1 = string2int(val1);
+			    value2 = string2int(val2);
+			    int total = value1 + value2;
+			    char number[20];
+			    int2string(total,number);
+			    strcpy(buffer,&buffer[i]);
+			    strcat(number,buffer);
+			    printf("ADD RESULT: %s \n",number);
+		    }
 
+
+
+
+
+
+
+
+		    /*
+
+
+		    printf("%c :number detected\n",buffer[i]);
+		    int j = 0;
+		    char val1 [bufferlen-i];
+		    val1[j] = buffer[i]; 
+		    while(isNumeric(buffer[++i]) && i<bufferlen)
+		    {
+			    val1[j] = buffer[i];
+			    j++;
+		    }
+		    if(buffer[i]=='+')
+		    {
+			char val2 [bufferlen-i];
+		    	value1 = string2int(val1);
+			j = 0;
+			while(isNumeric(++i))
+			{
+				val2[j] = buffer[i];
+				j++;
+			}
+			value2 = string2int(val2);
+	    	    }
+		    else if(buffer[i] == ';')
+		    {
+			    if(i == bufferlen + 1)
+			    {
+				    printf("DONE\n");
+
+			    }
+			    
+		    }
+		    int total = value1 + value2;
+		    printf("TOTAL: %d \n",total);
+	   	*/
+	   // }
+	
+	   // if(buffer[i] == )
 	// something missing?
-	break;
+    	}
     }
+    //return NULL;
 }
-
 /* Looks for a multiplication symbol "*" surrounded by two numbers, e.g.
    "5*6" and, if found, multiplies the two numbers and replaces the
    mulitplication subexpression with the result ("1+(5*6)+8" becomes
@@ -140,7 +221,8 @@ void *multiplier(void *arg)
     int startOffset, remainderOffset;
     int i;
     printf("MULTIPLIER\n");
-    //return NULL; /* remove this line */
+    //return"Failed trying to create threads");
+ NULL; /* remove this line */
 
     while (1) {
 	startOffset = remainderOffset = -1;
@@ -150,6 +232,8 @@ void *multiplier(void *arg)
 	    return NULL;
 	}
 
+	/* storing this prevents having to recalculate it in the loop */
+	bufferlen = strlen(buffer);
 	/* storing this prevents having to recalculate it in the loop */
 	bufferlen = strlen(buffer);
 	bufferlen = strlen(buffer);
@@ -306,5 +390,4 @@ int smp3_main(int argc, char **argv)
     /* everything is finished, print out the number of operations performed */
     fprintf(stdout, "Performed a total of %d operations\n", num_ops);
     return EXIT_SUCCESS;
-
 }

@@ -160,19 +160,75 @@ void *multiplier(void *arg)
 	startOffset = remainderOffset = -1;
 	value1 = value2 = -1;
 
+	while(buffer[0]==';')
+        {}	
 	if (timeToFinish()) {
 	    return NULL;
 	}
 
 	/* storing this prevents having to recalculate it in the loop */
 	bufferlen = strlen(buffer);
-	/* storing this prevents having to recalculate it in the loop */
-	bufferlen = strlen(buffer);
-	bufferlen = strlen(buffer);
 
+	bufferlen = strlen(buffer);
+	char val1[bufferlen] ,val2[bufferlen];
+	int index1 = 0,index2 = 0;
+	int afterPlus = 0;
 	for (i = 0; i < bufferlen; i++) {
-	    // same as adder, but v1*v2
-	}
+	    if(isNumeric(buffer[i]))
+	    {
+		    if(startOffset == -1)
+		    {
+			    startOffset = i;
+		    }
+		    //It's a numerical value and before *
+		    if(afterPlus)
+		    {
+			    val2[index2] = buffer[i];
+			    index2 ++;
+		    }
+		    //It's a numerical value and after *
+		    else
+		    {
+			    val1[index1] = buffer[i];
+			    index1 ++;
+		    }
+	    }
+	    else 
+	    {
+		    if(index1 != 0 && index2 != 0)
+		    {
+			    remainderOffset = i-1;
+			    val1[index1+1] = '\0';
+			    val2[index2+1] = '\0';
+			    value1 = string2int(val1);
+			    value2 = string2int(val2);
+			    int total = value1 * value2;
+			    char number[20];
+			    int2string(total,number);
+			    strcpy(buffer,&buffer[i]);
+			    strcat(number,buffer);
+			    printf("ADD RESULT: %s \n",number);
+			    index1,index2 = 0;
+		    }
+		    else if(index1 == 0)
+		    {
+			    printf("Non numerical number before sign.");
+			    break;
+		    }
+		    else if(buffer[i] == '*')
+		    {
+			    afterPlus = 1;
+
+		    }
+		    else if(buffer[i] == ';')
+		    {
+			    break;
+		    }
+	    }
+	
+	   // if(buffer[i] == )
+	// something missing?
+    	}
 
 	// something missing?
     }

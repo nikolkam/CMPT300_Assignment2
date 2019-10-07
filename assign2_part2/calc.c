@@ -253,11 +253,48 @@ void *degrouper(void *arg)
 
 	/* storing this prevents having to recalculate it in the loop */
 	bufferlen = strlen(buffer);
-
+	int start, end;
+	int afterBracket,afterStoring,index, = 0;
 	for (i = 0; i < bufferlen; i++) {
 	    // check for '(' followed by a naked number followed by ')'
 	    // remove ')' by shifting the tail end of the expression
 	    // remove '(' by shifting the beginning of the expression
+	    if(buffer[i] == '(')
+	    {
+		    afterBracket = 1;
+		    continue;
+	    }
+	    else if(isNumerical(buffer[i]))
+	    {
+		    if(afterBracket)
+		    {
+			    while(isNumerical(buffer[i]))
+			    char value [bufferlen];
+			    value[index] = buffer[i];
+			    index ++; 
+			    afterStoring = 1;
+			    start = i;
+		    }
+	    } 
+	    else if(buffer[i]==')')
+	    {
+		    if(afterStoring)
+		    {
+			    end = i;
+			    afterStoring = 0;
+			    afterBracket = 0;
+			    strcpy(buffer[start], &value)
+		    }
+
+	    }
+	    else
+	    {
+		    afterBracket = 0;
+		    afterStoring = 0;
+
+	    }
+
+	
 	}
 
 	// something missing?

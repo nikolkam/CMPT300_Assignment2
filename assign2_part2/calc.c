@@ -63,22 +63,23 @@ void *adder(void *arg)
     int i;
     printf("ADDER\n");
 
-    while (1) {
+    while (1) 
+    {
 	startOffset = remainderOffset = -1;
 	value1 = value2 = -1;
 
-	if (timeToFinish()) {
+	if (timeToFinish()) 
+	{
 	    return NULL;
 	}	
 
-	while(buffer[0]==';')
-        {}	
 	/* storing this prevents having to recalculate it in the loop */
 	bufferlen = strlen(buffer);
 	char val1[bufferlen] ,val2[bufferlen];
 	int index1 = 0,index2 = 0;
 	int afterPlus = 0;
-	for (i = 0; i < bufferlen; i++) {
+	for (i = 0; i < bufferlen; i++)
+       	{
 	    // do we have value1 already?  If not, is this a "naked" number?
 	    // if we do, is the next character after it a '+'?
 	    // if so, is the next one a "naked" number?
@@ -117,30 +118,21 @@ void *adder(void *arg)
 			    int2string(total,number);
 			    strcpy(buffer,&buffer[i]);
 			    strcat(number,buffer);
-			    printf("ADD RESULT: %s \n",number);
-			    index1,index2 = 0;
+			    index1 = index2 = 0;
 		    }
-		    else if(index1 == 0)
+		    else if(index2 == 0)
 		    {
-			    printf("Non numerical number before sign.");
-			    break;
+
 		    }
 		    else if(buffer[i] == '+')
 		    {
 			    afterPlus = 1;
-
-		    }
-		    else if(buffer[i] == ';')
-		    {
-			    break;
-		    }
-	    }
-	
-	   // if(buffer[i] == )
+		    }	   
 	// something missing?
-    	}
-    }
+	   }
+    	}	
     //return NULL;
+   }
 }
 /* Looks for a multiplication symbol "*" surrounded by two numbers, e.g.
    "5*6" and, if found, multiplies the two numbers and replaces the
@@ -148,90 +140,79 @@ void *adder(void *arg)
    "1+(30)+8"). */
 void *multiplier(void *arg)
 {
-    int bufferlen;
-    int value1, value2;
-    int startOffset, remainderOffset;
-    int i;
-    printf("MULTIPLIER\n");
-    //return"Failed trying to create threads");
- NULL; /* remove this line */
+	int bufferlen;
+	int value1, value2;
+	int startOffset, remainderOffset;
+        int i;
+    	printf("ADDER\n");
+    	while (1) 
+    	{
+		startOffset = remainderOffset = -1;
+		value1 = value2 = -1;
+		if (timeToFinish()) 
+		{
+		    return NULL;
+		}	
+		/* storing this prevents having to recalculate it in the loop */
+		bufferlen = strlen(buffer);
+		char val1[bufferlen] ,val2[bufferlen];
+		int index1 = 0,index2 = 0;
+		int afterPlus = 0;
+		for (i = 0; i < bufferlen; i++)
+		{
+		    // do we have value1 already?  If not, is this a "naked" number?
+		    // if we do, is the next character after it a '+'?
+		    // if so, is the next one a "naked" number?
+		    // once we have value1, value2 and start and end offsets of the
+		    // expression in buffer, replace it with v1+v2
+		    if(isNumeric(buffer[i]))
+		    {
+			    if(startOffset == -1)
+			    {
+				    startOffset = i;
+			    }
+			    //It's a numerical value and before +
+			    if(afterPlus)
+			    {
+				    val2[index2] = buffer[i];
+				    index2 ++;
+			    }
+			    //It's a numerical value and after + 
+			    else
+			    {
+				    val1[index1] = buffer[i];
+				    index1 ++;
+			    }
+		    }
+		    else 
+		    {
+			    if(index1 != 0 && index2 != 0)
+			    {
+				    remainderOffset = i-1;
+				    val1[index1+1] = '\0';
+				    val2[index2+1] = '\0';
+				    value1 = string2int(val1);
+				    value2 = string2int(val2);
+				    int total = value1 + value2;
+				    char number[20];
+				    int2string(total,number);
+				    strcpy(buffer,&buffer[i]);
+				    strcat(number,buffer);
+				    index1 = index2 = 0;
+			    }
+			    else if(index2 == 0)
+			    {
 
-    while (1) {
-	startOffset = remainderOffset = -1;
-	value1 = value2 = -1;
-
-	while(buffer[0]==';')
-        {}	
-	if (timeToFinish()) {
-	    return NULL;
-	}
-
-	/* storing this prevents having to recalculate it in the loop */
-	bufferlen = strlen(buffer);
-
-	bufferlen = strlen(buffer);
-	char val1[bufferlen] ,val2[bufferlen];
-	int index1 = 0,index2 = 0;
-	int afterPlus = 0;
-	for (i = 0; i < bufferlen; i++) {
-	    if(isNumeric(buffer[i]))
-	    {
-		    if(startOffset == -1)
-		    {
-			    startOffset = i;
-		    }
-		    //It's a numerical value and before *
-		    if(afterPlus)
-		    {
-			    val2[index2] = buffer[i];
-			    index2 ++;
-		    }
-		    //It's a numerical value and after *
-		    else
-		    {
-			    val1[index1] = buffer[i];
-			    index1 ++;
-		    }
-	    }
-	    else 
-	    {
-		    if(index1 != 0 && index2 != 0)
-		    {
-			    remainderOffset = i-1;
-			    val1[index1+1] = '\0';
-			    val2[index2+1] = '\0';
-			    value1 = string2int(val1);
-			    value2 = string2int(val2);
-			    int total = value1 * value2;
-			    char number[20];
-			    int2string(total,number);
-			    strcpy(buffer,&buffer[i]);
-			    strcat(number,buffer);
-			    printf("ADD RESULT: %s \n",number);
-			    index1,index2 = 0;
-		    }
-		    else if(index1 == 0)
-		    {
-			    printf("Non numerical number before sign.");
-			    break;
-		    }
-		    else if(buffer[i] == '*')
-		    {
-			    afterPlus = 1;
-
-		    }
-		    else if(buffer[i] == ';')
-		    {
-			    break;
-		    }
-	    }
-	
-	   // if(buffer[i] == )
-	// something missing?
-    	}
-
-	// something missing?
-    }
+			    }
+			    else if(buffer[i] == '+')
+			    {
+				    afterPlus = 1;
+			    }	   
+		            // something missing?
+		   }
+    		}	
+    //return NULL;
+   }
 }
 
 
@@ -254,7 +235,8 @@ void *degrouper(void *arg)
 	/* storing this prevents having to recalculate it in the loop */
 	bufferlen = strlen(buffer);
 	int start, end;
-	int afterBracket,afterStoring,index, = 0;
+	int afterBracket,afterStoring,index = 0;
+	char value [bufferlen];
 	for (i = 0; i < bufferlen; i++) {
 	    // check for '(' followed by a naked number followed by ')'
 	    // remove ')' by shifting the tail end of the expression
@@ -264,12 +246,12 @@ void *degrouper(void *arg)
 		    afterBracket = 1;
 		    continue;
 	    }
-	    else if(isNumerical(buffer[i]))
+	    else if(isNumeric(buffer[i]))
 	    {
 		    if(afterBracket)
 		    {
-			    while(isNumerical(buffer[i]))
-			    char value [bufferlen];
+			    //while(isNumerical(buffer[i]))
+
 			    value[index] = buffer[i];
 			    index ++; 
 			    afterStoring = 1;
@@ -283,7 +265,7 @@ void *degrouper(void *arg)
 			    end = i;
 			    afterStoring = 0;
 			    afterBracket = 0;
-			    strcpy(buffer[start], &value)
+			    strcpy(buffer[start], &value);
 		    }
 
 	    }

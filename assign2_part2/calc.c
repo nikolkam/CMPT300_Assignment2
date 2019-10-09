@@ -9,7 +9,7 @@ pthread_t sentinelThread;
 
 char buffer[BUF_SIZE];
 int num_ops;
-
+pthread_mutex_t  mut = PTHREAD_MUTEX_INITIALIZER;
 
 /* Utiltity functions provided for your convenience */
 
@@ -56,15 +56,16 @@ int timeToFinish()
    to worry about associativity! */
 void *adder(void *arg)
 {
-	return NULL;
+	//return NULL;
 	int bufferlen;
 	int value1, value2;
 	int startOffset, remainderOffset;
 	int i;
 	printf("ADDER\n");
-
+	
 	while (1) 
 	{
+		pthread_mutex_lock(&mut);
 		startOffset = remainderOffset = -1;
 		value1 = value2 = -1;
 
@@ -75,67 +76,54 @@ void *adder(void *arg)
 
 		/* storing this prevents having to recalculate it in the loop */
 		bufferlen = strlen(buffer);
-		char val1[bufferlen] ,val2[bufferlen];
-		int index1 = 0,index2 = 0;
-		int afterPlus = 0;
+		//char val1[bufferlen] ,val2[bufferlen];
+		int plusIndex = -1;
 		for (i = 0; i < bufferlen; i++)
 		{
-			// do we have value1 already?  If not, is this a "naked" number?
-			// if we do, is the next character after it a '+'?
-			// if so, is the next one a "naked" number?
-			// once we have value1, value2 and start and end offsets of the
-			// expression in buffer, replace it with v1+v2
 			if(isNumeric(buffer[i]))
 			{
 				if(startOffset == -1)
-				{
 					startOffset = i;
-				}
-				//It's a numerical value and before +
-				if(afterPlus)
-				{
-					val2[index2] = buffer[i];
-					index2 ++;
-				}
-				//It's a numerical value and after + 
-				else
-				{
-					val1[index1] = buffer[i];
-					index1 ++;
-				}
 			}
 			else 
 			{
-				if(index1 != 0 && index2 != 0)
+				if(plusIndex != -1)
 				{
 					remainderOffset = i;
-					val1[index1+1] = '\0';
-					val2[index2+1] = '\0';
-					value1 = string2int(val1);
-					value2 = string2int(val2);
+					char temp[i-plusIndex-1];
+					for(int index = plusIndex+1,j=0;index<=i;index++,j++)
+					{
+						temp[j] = buffer[index];
+					}
+					value2 = string2int(temp);	
 					int total = value1 + value2;
 					char number[20];
 					int2string(total,number);
 					strcpy(&buffer[startOffset],number);
 					strcat(buffer,&buffer[remainderOffset]);
 					printf("%s \n",buffer);
-					index1 = index2 = 0;
-					startOffset = -1;
-					remainderOffset = -1;
+					startOffset = remainderOffset = plusIndex = -1;
 				}
 				else if(buffer[i] == '+')
 				{
-					afterPlus = 1;
+					char temp [i-startOffset];
+					for(int index = startOffset, j = 0; index<i;index++,j++)
+					{
+						temp[j] = buffer[index];
+					}
+					value1 = string2int(temp);
+					plusIndex = i;
 				}
 		     		else
 				{
-					afterPlus = index1 = index2 = 0;
-					startOffset = remainderOffset = -1;
+					plusIndex = startOffset = remainderOffset = -1;
 				}		
 				// something missing?
 			}
+
 		}	
 		//return NULL;
+		pthread_mutex_unlock(&mut);
 	}
 }
 /* Looks for a multiplication symbol "*" surrounded by two numbers, e.g.
@@ -144,14 +132,16 @@ void *adder(void *arg)
    "1+(30)+8"). */
 void *multiplier(void *arg)
 {
+	//return NULL;
 	int bufferlen;
 	int value1, value2;
 	int startOffset, remainderOffset;
 	int i;
-	printf("ADDER\n");
+	printf("Multiplier\n");
 
 	while (1) 
 	{
+		pthread_mutex_lock(&mut);
 		startOffset = remainderOffset = -1;
 		value1 = value2 = -1;
 
@@ -162,69 +152,55 @@ void *multiplier(void *arg)
 
 		/* storing this prevents having to recalculate it in the loop */
 		bufferlen = strlen(buffer);
-		char val1[bufferlen] ,val2[bufferlen];
-		int index1 = 0,index2 = 0;
-		int afterPlus = 0;
+		//char val1[bufferlen] ,val2[bufferlen];
+		int plusIndex = -1;
 		for (i = 0; i < bufferlen; i++)
 		{
-			// do we have value1 already?  If not, is this a "naked" number?
-			// if we do, is the next character after it a '+'?
-			// if so, is the next one a "naked" number?
-			// once we have value1, value2 and start and end offsets of the
-			// expression in buffer, replace it with v1+v2
 			if(isNumeric(buffer[i]))
 			{
 				if(startOffset == -1)
-				{
 					startOffset = i;
-				}
-				//It's a numerical value and before +
-				if(afterPlus)
-				{
-					val2[index2] = buffer[i];
-					index2 ++;
-				}
-				//It's a numerical value and after + 
-				else
-				{
-					val1[index1] = buffer[i];
-					index1 ++;
-				}
 			}
 			else 
 			{
-				if(index1 != 0 && index2 != 0)
+				if(plusIndex != -1)
 				{
 					remainderOffset = i;
-					val1[index1+1] = '\0';
-					val2[index2+1] = '\0';
-					value1 = string2int(val1);
-					value2 = string2int(val2);
+					char temp[i-plusIndex-1];
+					for(int index = plusIndex+1,j=0;index<=i;index++,j++)
+					{
+						temp[j] = buffer[index];
+					}
+					value2 = string2int(temp);	
 					int total = value1 * value2;
 					char number[20];
 					int2string(total,number);
 					strcpy(&buffer[startOffset],number);
 					strcat(buffer,&buffer[remainderOffset]);
 					printf("%s \n",buffer);
-					index1 = index2 = 0;
-					startOffset = -1;
-					remainderOffset = -1;
+					startOffset = remainderOffset = plusIndex = -1;
 				}
 				else if(buffer[i] == '*')
 				{
-					afterPlus = 1;
+					char temp [i-startOffset];
+					for(int index = startOffset, j = 0; index<i;index++,j++)
+					{
+						temp[j] = buffer[index];
+					}
+					value1 = string2int(temp);
+					plusIndex = i;
 				}
 		     		else
 				{
-					afterPlus = index1 = index2 = 0;
-					startOffset = remainderOffset = -1;
+					plusIndex = startOffset = remainderOffset = -1;
 				}		
 				// something missing?
 			}
-		}	
+		}
+		pthread_mutex_unlock(&mut);	
 		//return NULL;
-	}}
-
+	}
+}
 
 /* Looks for a number immediately surrounded by parentheses [e.g.
    "(56)"] in the buffer and, if found, removes the parentheses leaving

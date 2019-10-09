@@ -1,7 +1,6 @@
 /* calc.c - Multithreaded calculator */
 
 #include "calc.h"
-
 pthread_t adderThread;
 pthread_t degrouperThread;
 pthread_t multiplierThread;
@@ -57,6 +56,7 @@ int timeToFinish()
    to worry about associativity! */
 void *adder(void *arg)
 {
+	return NULL;
 	int bufferlen;
 	int value1, value2;
 	int startOffset, remainderOffset;
@@ -108,7 +108,7 @@ void *adder(void *arg)
 			{
 				if(index1 != 0 && index2 != 0)
 				{
-					remainderOffset = i-1;
+					remainderOffset = i;
 					val1[index1+1] = '\0';
 					val2[index2+1] = '\0';
 					value1 = string2int(val1);
@@ -116,18 +116,22 @@ void *adder(void *arg)
 					int total = value1 + value2;
 					char number[20];
 					int2string(total,number);
-					strcpy(buffer,&buffer[i]);
-					strcat(number,buffer);
+					strcpy(&buffer[startOffset],number);
+					strcat(buffer,&buffer[remainderOffset]);
+					printf("%s \n",buffer);
 					index1 = index2 = 0;
-				}
-				else if(index2 == 0)
-				{
-
+					startOffset = -1;
+					remainderOffset = -1;
 				}
 				else if(buffer[i] == '+')
 				{
 					afterPlus = 1;
-				}	   
+				}
+		     		else
+				{
+					afterPlus = index1 = index2 = 0;
+					startOffset = remainderOffset = -1;
+				}		
 				// something missing?
 			}
 		}	
@@ -145,14 +149,17 @@ void *multiplier(void *arg)
 	int startOffset, remainderOffset;
 	int i;
 	printf("ADDER\n");
+
 	while (1) 
 	{
 		startOffset = remainderOffset = -1;
 		value1 = value2 = -1;
+
 		if (timeToFinish()) 
 		{
 			return NULL;
 		}	
+
 		/* storing this prevents having to recalculate it in the loop */
 		bufferlen = strlen(buffer);
 		char val1[bufferlen] ,val2[bufferlen];
@@ -188,32 +195,35 @@ void *multiplier(void *arg)
 			{
 				if(index1 != 0 && index2 != 0)
 				{
-					remainderOffset = i-1;
+					remainderOffset = i;
 					val1[index1+1] = '\0';
 					val2[index2+1] = '\0';
 					value1 = string2int(val1);
 					value2 = string2int(val2);
-					int total = value1 + value2;
+					int total = value1 * value2;
 					char number[20];
 					int2string(total,number);
-					strcpy(buffer,&buffer[i]);
-					strcat(number,buffer);
+					strcpy(&buffer[startOffset],number);
+					strcat(buffer,&buffer[remainderOffset]);
+					printf("%s \n",buffer);
 					index1 = index2 = 0;
+					startOffset = -1;
+					remainderOffset = -1;
 				}
-				else if(index2 == 0)
-				{
-
-				}
-				else if(buffer[i] == '+')
+				else if(buffer[i] == '*')
 				{
 					afterPlus = 1;
-				}	   
+				}
+		     		else
+				{
+					afterPlus = index1 = index2 = 0;
+					startOffset = remainderOffset = -1;
+				}		
 				// something missing?
 			}
 		}	
 		//return NULL;
-	}
-}
+	}}
 
 
 /* Looks for a number immediately surrounded by parentheses [e.g.
@@ -234,27 +244,21 @@ void *degrouper(void *arg)
 
 		/* storing this prevents having to recalculate it in the loop */
 		bufferlen = strlen(buffer);
-		int start, end;
+		int start = -1,  end = -1;
 		int afterBracket,afterStoring,index = 0;
 		char value [bufferlen];
 		for (i = 0; i < bufferlen; i++) 
 		{
-			// check for '(' followed by a naked number followed by ')'
-			// remove ')' by shifting the tail end of the expression
-			// remove '(' by shifting the beginning of the expression
 			if(buffer[i] == '(')
 			{
 				afterBracket = 1;
-				continue;
+				start = i;
 			}
 			else if(isNumeric(buffer[i]))
 			{
 				if(afterBracket)
 				{
-					value[index] = buffer[i];
-					index ++; 
 					afterStoring = 1;
-					start = i;
 				}
 			} 
 			else if(buffer[i]==')')
@@ -262,17 +266,18 @@ void *degrouper(void *arg)
 				if(afterStoring)
 				{
 					end = i;
-					afterStoring = 0;
-					afterBracket = 0;
-					strcpy(buffer[start], &value);
+					afterStoring = afterBracket = 0;
+					strcpy(&buffer[end],&buffer[end+1]);
+					strcpy(&buffer[start], &buffer[start+1]);
+
 				}
+				
+				printf("%s \n",buffer);
 
 			}
 			else
 			{
-				afterBracket = 0;
-				afterStoring = 0;
-
+				afterBracket = afterStoring = 0;
 			}
 
 

@@ -61,7 +61,6 @@ void *adder(void *arg)
 	int value1, value2;
 	int startOffset, remainderOffset;
 	int i;
-	printf("ADDER\n");
 	
 	while (1) 
 	{
@@ -103,6 +102,7 @@ void *adder(void *arg)
 					strcat(buffer,&buffer[remainderOffset]);
 					printf("%s \n",buffer);
 					startOffset = remainderOffset = plusIndex = -1;
+					//break;
 				}
 				else if(buffer[i] == '+')
 				{
@@ -114,9 +114,14 @@ void *adder(void *arg)
 					value1 = string2int(temp);
 					plusIndex = i;
 				}
-		     		else
+				else if(buffer[i] == '(' || buffer[i] == ')')
 				{
 					plusIndex = startOffset = remainderOffset = -1;
+				}
+				else
+				{
+					plusIndex = startOffset = remainderOffset = -1;
+					break;
 				}		
 				// something missing?
 			}
@@ -137,7 +142,6 @@ void *multiplier(void *arg)
 	int value1, value2;
 	int startOffset, remainderOffset;
 	int i;
-	printf("Multiplier\n");
 
 	while (1) 
 	{
@@ -179,6 +183,7 @@ void *multiplier(void *arg)
 					strcat(buffer,&buffer[remainderOffset]);
 					printf("%s \n",buffer);
 					startOffset = remainderOffset = plusIndex = -1;
+					//break;
 				}
 				else if(buffer[i] == '*')
 				{
@@ -190,9 +195,15 @@ void *multiplier(void *arg)
 					value1 = string2int(temp);
 					plusIndex = i;
 				}
+				else if(buffer[i] == '(' || buffer[i] == ')')
+				{
+					plusIndex = startOffset = remainderOffset = -1;
+
+				}
 		     		else
 				{
 					plusIndex = startOffset = remainderOffset = -1;
+					break;
 				}		
 				// something missing?
 			}
@@ -221,8 +232,7 @@ void *degrouper(void *arg)
 		/* storing this prevents having to recalculate it in the loop */
 		bufferlen = strlen(buffer);
 		int start = -1,  end = -1;
-		int afterBracket,afterStoring,index = 0;
-		char value [bufferlen];
+		int afterBracket,afterStoring = 0;
 		for (i = 0; i < bufferlen; i++) 
 		{
 			if(buffer[i] == '(')

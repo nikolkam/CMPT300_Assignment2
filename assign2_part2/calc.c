@@ -1,5 +1,5 @@
 /* calc.c - Multithreaded calculator */
-
+#include <unistd.h>
 #include "calc.h"
 pthread_t adderThread;
 pthread_t degrouperThread;
@@ -86,7 +86,24 @@ void *adder(void *arg)
 			}
 			else 
 			{
-				if(plusIndex != -1)
+				if(buffer[i] == '(' || buffer[i] == ')')
+				{
+					printf("() HIT \n");
+					pthread_mutex_unlock(&mut);
+					while(buffer[i] == '(' || buffer[i] == ')')
+					{
+						sched_yield();
+						sleep(1);
+					}
+					pthread_mutex_lock(&mut);
+					i--;
+					continue;
+					//plusIndex = startOffset = remainderOffset = -1;
+									
+					//set flag to multiplication
+
+				}
+				else if(plusIndex != -1 )
 				{
 					remainderOffset = i;
 					char temp[i-plusIndex-1];
@@ -100,8 +117,9 @@ void *adder(void *arg)
 					int2string(total,number);
 					strcpy(&buffer[startOffset],number);
 					strcat(buffer,&buffer[remainderOffset]);
-					//printf("%s \n",buffer);
+					printf("ADD%s \n",buffer);
 					startOffset = remainderOffset = plusIndex = -1;
+
 					//break;
 					num_ops++;
 				}
@@ -115,13 +133,7 @@ void *adder(void *arg)
 					value1 = string2int(temp);
 					plusIndex = i;
 				}
-				else if(buffer[i] == '(' || buffer[i] == ')')
-				{
-					plusIndex = startOffset = remainderOffset = -1;
-					//set flag to multiplication
-
-				}
-				else
+				else 	
 				{
 					plusIndex = startOffset = remainderOffset = -1;
 					break;
@@ -129,10 +141,11 @@ void *adder(void *arg)
 				// something missing?
 			}
 
+
 		}	
 		//return NULL;
 		pthread_mutex_unlock(&mut);
-		
+		sleep(1);
 	}
 }
 /* Looks for a multiplication symbol "*" surrounded by two numbers, e.g.
@@ -185,10 +198,9 @@ void *multiplier(void *arg)
 					int2string(total,number);
 					strcpy(&buffer[startOffset],number);
 					strcat(buffer,&buffer[remainderOffset]);
-					//printf("%s \n",buffer);
+					printf("MUL%s \n",buffer);
 					startOffset = remainderOffset = plusIndex = -1;
 					//break;
-					
 					num_ops ++;
 				}
 				else if(buffer[i] == '*')
@@ -205,7 +217,6 @@ void *multiplier(void *arg)
 				else if(buffer[i] == '(' || buffer[i] == ')')
 				{
 					plusIndex = startOffset = remainderOffset = -1;
-
 				}
 		     		else
 				{
@@ -234,7 +245,7 @@ void *degrouper(void *arg)
 		{
 			return NULL;
 		}
-
+		pthread_mutex_lock(&mut);
 		/* storing this prevents having to recalculate it in the loop */
 		bufferlen = strlen(buffer);
 		int start = -1,  end = -1;
@@ -262,6 +273,7 @@ void *degrouper(void *arg)
 					afterStoring = afterBracket = 0;
 					strcpy(&buffer[end],&buffer[end+1]);
 					strcpy(&buffer[start], &buffer[start+1]);
+					printf("DEG%s \n",buffer);
 					num_ops ++;
 				}
 				
@@ -274,7 +286,7 @@ void *degrouper(void *arg)
 
 
 		}
-
+		pthread_mutex_unlock(&mut);
 		// something missing?
 	}
 }

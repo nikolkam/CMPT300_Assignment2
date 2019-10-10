@@ -100,9 +100,10 @@ void *adder(void *arg)
 					int2string(total,number);
 					strcpy(&buffer[startOffset],number);
 					strcat(buffer,&buffer[remainderOffset]);
-					printf("%s \n",buffer);
+					//printf("%s \n",buffer);
 					startOffset = remainderOffset = plusIndex = -1;
 					//break;
+					num_ops++;
 				}
 				else if(buffer[i] == '+')
 				{
@@ -117,6 +118,8 @@ void *adder(void *arg)
 				else if(buffer[i] == '(' || buffer[i] == ')')
 				{
 					plusIndex = startOffset = remainderOffset = -1;
+					//set flag to multiplication
+
 				}
 				else
 				{
@@ -129,6 +132,7 @@ void *adder(void *arg)
 		}	
 		//return NULL;
 		pthread_mutex_unlock(&mut);
+		
 	}
 }
 /* Looks for a multiplication symbol "*" surrounded by two numbers, e.g.
@@ -181,9 +185,11 @@ void *multiplier(void *arg)
 					int2string(total,number);
 					strcpy(&buffer[startOffset],number);
 					strcat(buffer,&buffer[remainderOffset]);
-					printf("%s \n",buffer);
+					//printf("%s \n",buffer);
 					startOffset = remainderOffset = plusIndex = -1;
 					//break;
+					
+					num_ops ++;
 				}
 				else if(buffer[i] == '*')
 				{
@@ -194,6 +200,7 @@ void *multiplier(void *arg)
 					}
 					value1 = string2int(temp);
 					plusIndex = i;
+
 				}
 				else if(buffer[i] == '(' || buffer[i] == ')')
 				{
@@ -220,7 +227,6 @@ void *degrouper(void *arg)
 {
 	int bufferlen;
 	int i;
-	printf("DEGROUPER\n");
 	//return NULL; /* remove this line */
 	while (1)
 	{
@@ -237,6 +243,7 @@ void *degrouper(void *arg)
 		{
 			if(buffer[i] == '(')
 			{
+				
 				afterBracket = 1;
 				start = i;
 			}
@@ -255,10 +262,9 @@ void *degrouper(void *arg)
 					afterStoring = afterBracket = 0;
 					strcpy(&buffer[end],&buffer[end+1]);
 					strcpy(&buffer[start], &buffer[start+1]);
-
+					num_ops ++;
 				}
 				
-				printf("%s \n",buffer);
 
 			}
 			else
@@ -284,7 +290,6 @@ void *sentinel(void *arg)
 	char numberBuffer[20];
 	int bufferlen;
 	int i;
-	printf("SENTINEL\n");
 	//return NULL; /* remove this line */
 
 	while (1) {
@@ -331,7 +336,6 @@ void *reader(void *arg)
 		int currentlen;
 		int newlen;
 		int free;
-		printf("READER\n");
 		fgets(tBuffer, sizeof(tBuffer), stdin);
 
 		/* Sychronization bugs in remainder of function need to be fixed */
@@ -371,7 +375,7 @@ void *reader(void *arg)
 int smp3_main(int argc, char **argv)
 {
 	void *arg = 0;		/* dummy value */
-
+	num_ops = 0;
 	/* let's create our threads */
 	if (pthread_create(&multiplierThread, NULL, multiplier, arg) || pthread_create(&adderThread, NULL, adder, arg)|| pthread_create(&degrouperThread, NULL, degrouper, arg)|| pthread_create(&sentinelThread, NULL, sentinel, arg)|| pthread_create(&readerThread, NULL, reader, arg))
        	{

@@ -61,10 +61,10 @@ void *adder(void *arg)
 	int value1, value2;
 	int startOffset, remainderOffset;
 	int i;
-	
+		
 	while (1) 
 	{
-		pthread_mutex_lock(&mut);
+
 		startOffset = remainderOffset = -1;
 		value1 = value2 = -1;
 
@@ -73,19 +73,28 @@ void *adder(void *arg)
 			return NULL;
 		}	
 
+		pthread_mutex_lock(&mut);
 		/* storing this prevents having to recalculate it in the loop */
 		bufferlen = strlen(buffer);
 		//char val1[bufferlen] ,val2[bufferlen];
 		int plusIndex = -1;
+		int stored = 0;
 		for (i = 0; i < bufferlen; i++)
 		{
+			
+			//printf("Adder at buffer[%d]. \n",i);
 			if(isNumeric(buffer[i]))
 			{
 				if(startOffset == -1)
 					startOffset = i;
+				else if(plusIndex != -1)
+				{
+					stored = 1;
+				}
 			}
 			else 
 			{
+				/*
 				if(buffer[i] == '(' || buffer[i] == ')')
 				{
 					printf("() HIT \n");
@@ -96,14 +105,14 @@ void *adder(void *arg)
 						sleep(1);
 					}
 					pthread_mutex_lock(&mut);
-					i--;
-					continue;
+					break;
 					//plusIndex = startOffset = remainderOffset = -1;
 									
 					//set flag to multiplication
 
 				}
-				else if(plusIndex != -1 )
+				else*/
+			       	if(plusIndex != -1 && stored)
 				{
 					remainderOffset = i;
 					char temp[i-plusIndex-1];
@@ -114,14 +123,16 @@ void *adder(void *arg)
 					value2 = string2int(temp);	
 					int total = value1 + value2;
 					char number[20];
+					char tempBuf [BUF_SIZE];
 					int2string(total,number);
 					strcpy(&buffer[startOffset],number);
-					strcat(buffer,&buffer[remainderOffset]);
-					printf("ADD%s \n",buffer);
+					strcpy(tempBuf, &buffer[remainderOffset]);
+					strcat(buffer,tempBuf);
+					
+					//printf("ADD%s \n",buffer);
 					startOffset = remainderOffset = plusIndex = -1;
-
-					//break;
 					num_ops++;
+					break;
 				}
 				else if(buffer[i] == '+')
 				{
@@ -135,8 +146,8 @@ void *adder(void *arg)
 				}
 				else 	
 				{
+					stored = 0;
 					plusIndex = startOffset = remainderOffset = -1;
-					break;
 				}		
 				// something missing?
 			}
@@ -145,7 +156,8 @@ void *adder(void *arg)
 		}	
 		//return NULL;
 		pthread_mutex_unlock(&mut);
-		sleep(1);
+		sched_yield();
+		//sleep(1);
 	}
 }
 /* Looks for a multiplication symbol "*" surrounded by two numbers, e.g.
@@ -159,10 +171,10 @@ void *multiplier(void *arg)
 	int value1, value2;
 	int startOffset, remainderOffset;
 	int i;
-
 	while (1) 
 	{
-		pthread_mutex_lock(&mut);
+		
+
 		startOffset = remainderOffset = -1;
 		value1 = value2 = -1;
 
@@ -170,38 +182,65 @@ void *multiplier(void *arg)
 		{
 			return NULL;
 		}	
-
+		
+		pthread_mutex_lock(&mut);
 		/* storing this prevents having to recalculate it in the loop */
 		bufferlen = strlen(buffer);
 		//char val1[bufferlen] ,val2[bufferlen];
-		int plusIndex = -1;
+		int multipleIndex = -1;
+		int stored = 0;
 		for (i = 0; i < bufferlen; i++)
 		{
+			//printf("Multiplier at buffer[%d]. \n",i);
 			if(isNumeric(buffer[i]))
 			{
 				if(startOffset == -1)
 					startOffset = i;
+				else if(multipleIndex != -1)
+				{
+					stored = 1;
+				}
 			}
 			else 
 			{
-				if(plusIndex != -1)
+				/*
+				if(buffer[i] == '(' || buffer[i] == ')')
+				{
+					printf("() HIT \n");
+					pthread_mutex_unlock(&mut);
+					while(buffer[i] == '(' || buffer[i] == ')')
+					{
+						sched_yield();
+						sleep(1);
+					}
+					pthread_mutex_lock(&mut);
+					break;
+					//multipleIndex = startOffset = remainderOffset = -1;
+									
+					//set flag to multiplication
+
+				}
+				else */
+				if(multipleIndex != -1 && stored)
 				{
 					remainderOffset = i;
-					char temp[i-plusIndex-1];
-					for(int index = plusIndex+1,j=0;index<=i;index++,j++)
+					char temp[i-multipleIndex-1];
+					for(int index = multipleIndex+1,j=0;index<=i;index++,j++)
 					{
 						temp[j] = buffer[index];
 					}
 					value2 = string2int(temp);	
 					int total = value1 * value2;
 					char number[20];
+					char tempBuf [BUF_SIZE];
 					int2string(total,number);
 					strcpy(&buffer[startOffset],number);
-					strcat(buffer,&buffer[remainderOffset]);
-					printf("MUL%s \n",buffer);
-					startOffset = remainderOffset = plusIndex = -1;
-					//break;
-					num_ops ++;
+					strcpy(tempBuf, &buffer[remainderOffset]);
+					strcat(buffer,tempBuf);
+					//printf("MULTIPLY: %s \n",buffer);
+					startOffset = remainderOffset = multipleIndex = -1;
+					num_ops++;
+					break;
 				}
 				else if(buffer[i] == '*')
 				{
@@ -211,23 +250,21 @@ void *multiplier(void *arg)
 						temp[j] = buffer[index];
 					}
 					value1 = string2int(temp);
-					plusIndex = i;
-
+					multipleIndex = i;
 				}
-				else if(buffer[i] == '(' || buffer[i] == ')')
+				else 	
 				{
-					plusIndex = startOffset = remainderOffset = -1;
-				}
-		     		else
-				{
-					plusIndex = startOffset = remainderOffset = -1;
-					break;
+					stored = 0;
+					multipleIndex = startOffset = remainderOffset = -1;
 				}		
 				// something missing?
 			}
-		}
-		pthread_mutex_unlock(&mut);	
+
+
+		}	
 		//return NULL;
+		pthread_mutex_unlock(&mut);
+		sched_yield();
 	}
 }
 
@@ -248,7 +285,7 @@ void *degrouper(void *arg)
 		pthread_mutex_lock(&mut);
 		/* storing this prevents having to recalculate it in the loop */
 		bufferlen = strlen(buffer);
-		int start = -1,  end = -1;
+		int startOffset = -1,  remainderOffset = -1;
 		int afterBracket,afterStoring = 0;
 		for (i = 0; i < bufferlen; i++) 
 		{
@@ -256,7 +293,7 @@ void *degrouper(void *arg)
 			{
 				
 				afterBracket = 1;
-				start = i;
+				startOffset = i;
 			}
 			else if(isNumeric(buffer[i]))
 			{
@@ -269,24 +306,31 @@ void *degrouper(void *arg)
 			{
 				if(afterStoring)
 				{
-					end = i;
+					remainderOffset = i;
+					//printf("start:%d remainder:%d \n",startOffset, remainderOffset);
 					afterStoring = afterBracket = 0;
-					strcpy(&buffer[end],&buffer[end+1]);
-					strcpy(&buffer[start], &buffer[start+1]);
-					printf("DEG%s \n",buffer);
+					char temp[BUF_SIZE];
+				        strcpy(temp, &buffer[remainderOffset+1]);	
+					strcpy(&buffer[remainderOffset],temp);
+					strcpy(temp, &buffer[startOffset+1]);
+					strcpy(&buffer[startOffset], temp);
+					//printf("DEG%s \n",buffer);
 					num_ops ++;
+					break;
 				}
-				
+			
 
 			}
 			else
 			{
 				afterBracket = afterStoring = 0;
+				//startOffset = remainderOffset = -1;
 			}
 
 
 		}
 		pthread_mutex_unlock(&mut);
+		sched_yield();
 		// something missing?
 	}
 }
@@ -306,12 +350,12 @@ void *sentinel(void *arg)
 
 	while (1) {
 
+
 		if (timeToFinish()) {
 			return NULL;
 		}
-		while(buffer[0]==';')
-		{}
 
+		pthread_mutex_lock(&mut);
 		/* storing this prevents having to recalculate it in the loop */
 		bufferlen = strlen(buffer);
 
@@ -334,6 +378,7 @@ void *sentinel(void *arg)
 				numberBuffer[i] = buffer[i];
 			}
 		}
+		pthread_mutex_unlock(&mut);
 		sched_yield();
 		// something missing?
 	}
@@ -368,13 +413,14 @@ void *reader(void *arg)
 
 		while (free < newlen)
 		{
-			// spinwaiting
+			sched_yield();// spinwaiting
 		}
-
+		pthread_mutex_lock(&mut);
 		/* we can add another expression now */
 		strcat(buffer, tBuffer);
 		strcat(buffer, ";");
-
+		//printf("READ%s \n",buffer);
+		pthread_mutex_unlock(&mut);
 		/* Stop when user enters '.' */
 		if (tBuffer[0] == '.') {
 			return NULL;

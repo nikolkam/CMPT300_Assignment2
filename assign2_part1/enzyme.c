@@ -43,8 +43,8 @@ void *run_enzyme(void *data) {
 			sched_yield();
 		}
 	};
-	printf("String: %s \n",((thread_info_t*) data)->string);	
-	printf("Swap: %d \n",((thread_info_t*) data)->swapcount);
+	//printf("String: %s \n",((thread_info_t*) data)->string);	
+	//printf("Swap: %d \n",((thread_info_t*) data)->swapcount);
 	return (void *)dt;
 }
 
@@ -113,7 +113,7 @@ void wait_till_done(char *string, int n) {
 	    sched_yield();	//stops executing current thread, places itself to the end of queue and lets new thread  to run
 	    workperformed=0;
 	    for(i=0;i<n;i++) 
-	        if (string[i] > string[i+1]) {
+	        if (string[i] > string[i+1]) {  
 	            workperformed=1;
 	    	}
 	    if(workperformed==0) break;

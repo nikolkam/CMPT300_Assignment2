@@ -119,12 +119,15 @@ then check that there are "naked" numbers to the left and right.
 Q1: At this point, your solution does not contain any synchronization or
 mutual exclusion.  Give an example of and explain a possible
 synchronization error that could occur in this code. Be specific.
+When there are many 
+
+
 
 Q2: Suppose we implement correct synchronization and mutual exclusion
 for all of the threads.  If our three functions were to operate on all
 expression in the buffer at once (not just the first expression), would
 the program generate incorrect output?  Why or why not?
-
+No, it should not 
 
 Step 3: Critical Sections
 -------------------------
@@ -147,6 +150,7 @@ synchronization errors (e.g., race conditions, data corruption).
 
 Q3: For this step, what specific data structure(s) need(s) protection?
 Why?
+Buffer needs protection because it should not be modified by two threads concurrently. Otherwise, it will be modified in unexpected order and may give different output for same input each time it runs.
 
 Q4: What would happen if you had a busy-wait within one of your critical
 sections?  What if it is a loop with sched_yield()?

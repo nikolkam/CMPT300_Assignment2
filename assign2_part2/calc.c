@@ -1,5 +1,6 @@
 /* calc.c - Multithreaded calculator */
 #include <unistd.h>
+#include <time.h>
 #include "calc.h"
 pthread_t adderThread;
 pthread_t degrouperThread;
@@ -9,8 +10,9 @@ pthread_t sentinelThread;
 
 char buffer[BUF_SIZE];
 int num_ops;
+int job_attempt [4] = {0,0,0,0}; //job attempted by index 0: adder 1:multiplier 2: degrouper 3:sentinel
 pthread_mutex_t  mut = PTHREAD_MUTEX_INITIALIZER;
-
+sem_t sem;
 /* Utiltity functions provided for your convenience */
 
 /* int2string converts an integer into a string and writes it in the
@@ -73,7 +75,8 @@ void *adder(void *arg)
 			return NULL;
 		}	
 
-		pthread_mutex_lock(&mut);
+		//pthread_mutex_lock(&mut);
+		sem_wait(&sem);
 		/* storing this prevents having to recalculate it in the loop */
 		bufferlen = strlen(buffer);
 		//char val1[bufferlen] ,val2[bufferlen];
@@ -132,9 +135,10 @@ void *adder(void *arg)
 					//printf("ADD%s \n",buffer);
 					startOffset = remainderOffset = plusIndex = -1;
 					num_ops++;
+					job_attempt[0] = 0;
 					break;
 				}
-				else if(buffer[i] == '+')
+				else if(buffer[i] == '+' && plusIndex == -1)
 				{
 					char temp [i-startOffset];
 					for(int index = startOffset, j = 0; index<i;index++,j++)
@@ -148,14 +152,17 @@ void *adder(void *arg)
 				{
 					stored = 0;
 					plusIndex = startOffset = remainderOffset = -1;
+
 				}		
 				// something missing?
 			}
 
-
 		}	
 		//return NULL;
-		pthread_mutex_unlock(&mut);
+		
+		job_attempt[0] ++;
+		//pthread_mutex_unlock(&mut);
+		sem_post(&sem);
 		sched_yield();
 		//sleep(1);
 	}
@@ -182,8 +189,8 @@ void *multiplier(void *arg)
 		{
 			return NULL;
 		}	
-		
-		pthread_mutex_lock(&mut);
+		sem_wait(&sem);
+		//pthread_mutex_lock(&mut);
 		/* storing this prevents having to recalculate it in the loop */
 		bufferlen = strlen(buffer);
 		//char val1[bufferlen] ,val2[bufferlen];
@@ -240,9 +247,10 @@ void *multiplier(void *arg)
 					//printf("MULTIPLY: %s \n",buffer);
 					startOffset = remainderOffset = multipleIndex = -1;
 					num_ops++;
+					job_attempt[1] = 0;
 					break;
 				}
-				else if(buffer[i] == '*')
+				else if(buffer[i] == '*' && multipleIndex == -1)
 				{
 					char temp [i-startOffset];
 					for(int index = startOffset, j = 0; index<i;index++,j++)
@@ -254,6 +262,7 @@ void *multiplier(void *arg)
 				}
 				else 	
 				{
+
 					stored = 0;
 					multipleIndex = startOffset = remainderOffset = -1;
 				}		
@@ -263,8 +272,11 @@ void *multiplier(void *arg)
 
 		}	
 		//return NULL;
-		pthread_mutex_unlock(&mut);
+		job_attempt[1] ++;
+		//pthread_mutex_unlock(&mut);
+		sem_post(&sem);
 		sched_yield();
+		//sleep(1);
 	}
 }
 
@@ -282,7 +294,8 @@ void *degrouper(void *arg)
 		{
 			return NULL;
 		}
-		pthread_mutex_lock(&mut);
+		//pthread_mutex_lock(&mut);
+		sem_wait(&sem);
 		/* storing this prevents having to recalculate it in the loop */
 		bufferlen = strlen(buffer);
 		int startOffset = -1,  remainderOffset = -1;
@@ -316,6 +329,7 @@ void *degrouper(void *arg)
 					strcpy(&buffer[startOffset], temp);
 					//printf("DEG%s \n",buffer);
 					num_ops ++;
+					job_attempt[2] = 0;
 					break;
 				}
 			
@@ -329,8 +343,11 @@ void *degrouper(void *arg)
 
 
 		}
-		pthread_mutex_unlock(&mut);
+		job_attempt[2] ++;
+		sem_post(&sem);
+		//pthread_mutex_unlock(&mut);
 		sched_yield();
+		//sleep(1);
 		// something missing?
 	}
 }
@@ -355,7 +372,8 @@ void *sentinel(void *arg)
 			return NULL;
 		}
 
-		pthread_mutex_lock(&mut);
+		sem_wait(&sem);
+		//pthread_mutex_lock(&mut);
 		/* storing this prevents having to recalculate it in the loop */
 		bufferlen = strlen(buffer);
 
@@ -370,16 +388,43 @@ void *sentinel(void *arg)
 					fprintf(stdout, "%s\n", numberBuffer);
 					/* shift the remainder of the string to the left */
 					strcpy(buffer, &buffer[i + 1]);
+					job_attempt[0] = job_attempt[1] = job_attempt[2] = job_attempt[3] = 0;
 					break;
 				}
 			} else if (!isNumeric(buffer[i])) {
+				job_attempt[3] ++;
+				int isStuck = 0, count = 0;
+				for(int i=0;i<4;i++)
+				{
+					//printf("JOB_ATTEMPT: ");
+					if(job_attempt[i] > 5)
+					{
+						//printf("[%d] = %d ",i,job_attempt[i]);
+						count ++;
+						if(count==4)
+						{
+							isStuck = 1;
+							break;
+						}
+
+					}
+					
+					//printf("\n");
+				}
+				if(isStuck)
+				{
+					printf("No progress can be made\n");
+					exit(EXIT_FAILURE);
+				}
 				break;
 			} else {
 				numberBuffer[i] = buffer[i];
 			}
 		}
-		pthread_mutex_unlock(&mut);
+		//pthread_mutex_unlock(&mut);
+		sem_post(&sem);
 		sched_yield();
+		usleep(100);
 		// something missing?
 	}
 }
@@ -415,12 +460,14 @@ void *reader(void *arg)
 		{
 			sched_yield();// spinwaiting
 		}
-		pthread_mutex_lock(&mut);
+		sem_wait(&sem);
+		//pthread_mutex_lock(&mut);
 		/* we can add another expression now */
 		strcat(buffer, tBuffer);
 		strcat(buffer, ";");
 		//printf("READ%s \n",buffer);
-		pthread_mutex_unlock(&mut);
+		sem_post(&sem);
+		//pthread_mutex_unlock(&mut);
 		/* Stop when user enters '.' */
 		if (tBuffer[0] == '.') {
 			return NULL;
@@ -434,6 +481,7 @@ int smp3_main(int argc, char **argv)
 {
 	void *arg = 0;		/* dummy value */
 	num_ops = 0;
+	sem_init(&sem,0,1);
 	/* let's create our threads */
 	if (pthread_create(&multiplierThread, NULL, multiplier, arg) || pthread_create(&adderThread, NULL, adder, arg)|| pthread_create(&degrouperThread, NULL, degrouper, arg)|| pthread_create(&sentinelThread, NULL, sentinel, arg)|| pthread_create(&readerThread, NULL, reader, arg))
        	{

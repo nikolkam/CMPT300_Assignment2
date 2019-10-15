@@ -1,1 +1,46 @@
-a
+1) Briefly explain why this application would be difficult to write using
+     multiple processes instead of threads.
+
+Unlike threads, processes do not share the memory with parent process unless we use a virtual memory address. Also, creating and terminating process takes much longer time than for threads.
+
+2) What is the significance of 'workperformed'?  How is it used?
+
+'workperformed' makes sure that the sleep function waits until there is no more swapping to be done. Also, it makes sure that there will be no joining during swap process. 
+
+3) Explain exactly what is the type of 'fp' in the following declaration:
+    void *(*fp)(void *)
+
+It is a pointer to function with void * parameter.  
+
+1) Why do we not detach any of the enzyme threads? Would the program function
+   if we detached the sleeper thread?
+
+Because if we once detatch them, threads are no longer joinable, we have to wait for all threads to compelte and get the return values. 
+Yes, it will still perform without a problem even if we detatch the sleeper thread because we don't have to join it.
+
+2) Why does the program use sched_yield? What happens if this is not used?
+   Will the swap counts always be identical?
+
+It is to let other threads perform swapping as well. It has to wait for other threads to be able to perform swapping at string[0] and string[1]. No, values for swapcount will change because order in which part of the string gets swapped changes.
+
+3) Threads are cancelled if the string contains a 'C' e.g. "Cherub".
+   Why do we not include cancelled threads when adding up the total number
+   of swaps?
+
+Because the threads does not perform swapping when the thread is canceled and does not increment the swapcount.
+
+4) What happens when a thread tries to join itself?
+   (You may need to create a test program to try this)
+   Does it deadlock? Or does it generate an error?
+
+Deadlock occurs as it is waiting for itself to finish. So, the thread will wait infinitely because the thread cannot finish until it joins, and it does not join until it finishes.
+
+5) Briefly explain how the sleeper thread is implemented.
+The sleeper is created in main and and prints error message and exits the program if it's taking longer than 5 seconds to finish the swapping.
+
+6) Briefly explain why PTHREAD_CANCEL_ASYNCHRONOUS is used in this MP.
+Because the thread has to be canceled immediately after it sees 'C' and using assynchronous is safe for this case because it's simple operation not involving the reservation of resources.
+
+7) Briefly explain the bug in Part II, #2 above.
+We have to allocate memory for all of the threads instead of just one.
+

@@ -21,7 +21,6 @@ void *run_enzyme(void *data) {
 	
 
 	pthread_setcancelstate(PTHREAD_CANCEL_ASYNCHRONOUS,NULL);//Set the thread to be canceled at any time
-	//thread_info_t *dt = (thread_info_t *)malloc(sizeof(thread_info_t));		
 	thread_info_t *dt = (thread_info_t *) data;
 	dt -> swapcount = 0;
 	if(dt->string[0]=='C')
@@ -43,8 +42,6 @@ void *run_enzyme(void *data) {
 			sched_yield();
 		}
 	};
-	//printf("String: %s \n",((thread_info_t*) data)->string);	
-	//printf("Swap: %d \n",((thread_info_t*) data)->swapcount);
 	return (void *)dt;
 }
 
@@ -142,9 +139,6 @@ int smp2_main(int argc, char **argv) {
 	please_quit = 0;
 	use_yield =1;
 	
-	//TEST
-		
-	//TEST END
 	printf("Creating threads...\n");
 	n = make_enzyme_threads(enzymes,string,run_enzyme); //
 	printf("Done creating %d threads.\n",n);

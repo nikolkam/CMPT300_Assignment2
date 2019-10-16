@@ -53,13 +53,13 @@ Q1: At this point, your solution does not contain any synchronization or
 mutual exclusion.  Give an example of and explain a possible
 synchronization error that could occur in this code. Be specific.
 
-When expression has mix of operations '+','*','( )', it may change buffer while it is under going calculation in other thread. It will result in inconsistent calculation and unpredictable behavior.
+When expression has mix of operations '+','*','( )', it may change buffer while it is undergoing calculation in other thread. It will result in inconsistent calculation and unpredictable behavior.
 
 Q2: Suppose we implement correct synchronization and mutual exclusion
 for all of the threads.  If our three functions were to operate on all
 expression in the buffer at once (not just the first expression), would
 the program generate incorrect output?  Why or why not?
-No, it should not 
+No, it should as they are properly synchronized. The buffer will be locked by one thread at a time, so threads will take turns to perform operation on buffer.
 
 
 Q3: For this step, what specific data structure(s) need(s) protection?
@@ -69,23 +69,35 @@ Buffer needs protection because it should not be modified by two threads concurr
 Q4: What would happen if you had a busy-wait within one of your critical
 sections?  What if it is a loop with sched_yield()?
 
+
+
 Q5: Why is it sometimes necessary to use the non-blocking
 pthread_mutex_trylock() instead of the blocking pthread_mutex_lock()?
 Think for example of a program that needs to acquire multiple mutexes at
 the same time.
 
+When a critical section is locked by other thread, mutex_lock can induce infinite wait. mutex_try lock will return EBUSY error when it fails to lock; thus, we can finish the thread in case it cannot lock and avoid the infinite wait.
+
+
+
 Q6: Is a new mutex, separate from what you have in Step 3, required to
 correctly implement this behavior?  Why or why not?
+
+
 
 Q7: Why is it important, even on single-processor machines, to keep the
 critical sections as small as possible?
 
+
 Q8: Why is spin-waiting without yielding usually inefficient?
 If the thread gets to run repeatedly without 
+
 
 Q9: When might spin-waiting without yielding or blocking actually be
 *more* efficient?
 
+
 Q10:  You have to supply an initial value when creating a semaphore.
 Which value should you use to mimic the default functionality of a mutex?
 What would happen if you specified a larger value?
+We need to initialize it to 1, so one process at a time will be able to run. If we initialize it to n, then n processes will be able to run concurrently, and in our case will result in undefined behaviour.

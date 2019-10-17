@@ -11,10 +11,10 @@ pthread_t sentinelThread;
 char buffer[BUF_SIZE];
 int num_ops;
 int job_attempt [4] = {0,0,0,0}; //job attempted by index 0: adder 1:multiplier 2: degrouper 3:sentinel
-pthread_mutex_t  mut = PTHREAD_MUTEX_INITIALIZER;
 sem_t sem;
-/* Utiltity functions provided for your convenience */
 
+
+/* Utiltity functions provided for your convenience */
 /* int2string converts an integer into a string and writes it in the
    passed char array s, which should be of reasonable size (e.g., 20
    characters).  */
@@ -37,8 +37,6 @@ int isNumeric(char c)
 }
 
 /* End utility functions */
-
-
 void printErrorAndExit(char *msg)
 {
 	msg = msg ? msg : "An unspecified error occured!";
@@ -58,7 +56,6 @@ int timeToFinish()
    to worry about associativity! */
 void *adder(void *arg)
 {
-	//return NULL;
 	int bufferlen;
 	int value1, value2;
 	int startOffset, remainderOffset;
@@ -74,18 +71,14 @@ void *adder(void *arg)
 		{
 			return NULL;
 		}	
-
-		//pthread_mutex_lock(&mut);
+		//lock
 		sem_wait(&sem);
 		/* storing this prevents having to recalculate it in the loop */
 		bufferlen = strlen(buffer);
-		//char val1[bufferlen] ,val2[bufferlen];
 		int plusIndex = -1;
 		int stored = 0;
 		for (i = 0; i < bufferlen; i++)
 		{
-			
-			//printf("Adder at buffer[%d]. \n",i);
 			if(isNumeric(buffer[i]))
 			{
 				if(startOffset == -1)
@@ -97,24 +90,7 @@ void *adder(void *arg)
 			}
 			else 
 			{
-				/*
-				if(buffer[i] == '(' || buffer[i] == ')')
-				{
-					printf("() HIT \n");
-					pthread_mutex_unlock(&mut);
-					while(buffer[i] == '(' || buffer[i] == ')')
-					{
-						sched_yield();
-						sleep(1);
-					}
-					pthread_mutex_lock(&mut);
-					break;
-					//plusIndex = startOffset = remainderOffset = -1;
-									
-					//set flag to multiplication
-
-				}
-				else*/
+				//performing calculation and updating adder
 			       	if(plusIndex != -1 && stored)
 				{
 					remainderOffset = i;
@@ -131,10 +107,9 @@ void *adder(void *arg)
 					strcpy(&buffer[startOffset],number);
 					strcpy(tempBuf, &buffer[remainderOffset]);
 					strcat(buffer,tempBuf);
-					
-					//printf("ADD%s \n",buffer);
 					startOffset = remainderOffset = plusIndex = -1;
 					num_ops++;
+					//operation performed
 					job_attempt[0] = 0;
 					break;
 				}
@@ -152,19 +127,14 @@ void *adder(void *arg)
 				{
 					stored = 0;
 					plusIndex = startOffset = remainderOffset = -1;
-
 				}		
-				// something missing?
 			}
 
 		}	
-		//return NULL;
-		
 		job_attempt[0] ++;
-		//pthread_mutex_unlock(&mut);
+		//unlock
 		sem_post(&sem);
 		sched_yield();
-		//sleep(1);
 	}
 }
 /* Looks for a multiplication symbol "*" surrounded by two numbers, e.g.
@@ -173,7 +143,6 @@ void *adder(void *arg)
    "1+(30)+8"). */
 void *multiplier(void *arg)
 {
-	//return NULL;
 	int bufferlen;
 	int value1, value2;
 	int startOffset, remainderOffset;
@@ -188,17 +157,15 @@ void *multiplier(void *arg)
 		if (timeToFinish()) 
 		{
 			return NULL;
-		}	
+		}
+		//lock	
 		sem_wait(&sem);
-		//pthread_mutex_lock(&mut);
 		/* storing this prevents having to recalculate it in the loop */
 		bufferlen = strlen(buffer);
-		//char val1[bufferlen] ,val2[bufferlen];
 		int multipleIndex = -1;
 		int stored = 0;
 		for (i = 0; i < bufferlen; i++)
 		{
-			//printf("Multiplier at buffer[%d]. \n",i);
 			if(isNumeric(buffer[i]))
 			{
 				if(startOffset == -1)
@@ -210,24 +177,7 @@ void *multiplier(void *arg)
 			}
 			else 
 			{
-				/*
-				if(buffer[i] == '(' || buffer[i] == ')')
-				{
-					printf("() HIT \n");
-					pthread_mutex_unlock(&mut);
-					while(buffer[i] == '(' || buffer[i] == ')')
-					{
-						sched_yield();
-						sleep(1);
-					}
-					pthread_mutex_lock(&mut);
-					break;
-					//multipleIndex = startOffset = remainderOffset = -1;
-									
-					//set flag to multiplication
-
-				}
-				else */
+				//performing calculation and updating buffer
 				if(multipleIndex != -1 && stored)
 				{
 					remainderOffset = i;
@@ -244,9 +194,9 @@ void *multiplier(void *arg)
 					strcpy(&buffer[startOffset],number);
 					strcpy(tempBuf, &buffer[remainderOffset]);
 					strcat(buffer,tempBuf);
-					//printf("MULTIPLY: %s \n",buffer);
 					startOffset = remainderOffset = multipleIndex = -1;
 					num_ops++;
+					//operation performed
 					job_attempt[1] = 0;
 					break;
 				}
@@ -266,17 +216,14 @@ void *multiplier(void *arg)
 					stored = 0;
 					multipleIndex = startOffset = remainderOffset = -1;
 				}		
-				// something missing?
 			}
 
 
 		}	
-		//return NULL;
 		job_attempt[1] ++;
-		//pthread_mutex_unlock(&mut);
+		//unlock		
 		sem_post(&sem);
 		sched_yield();
-		//sleep(1);
 	}
 }
 
@@ -287,14 +234,13 @@ void *degrouper(void *arg)
 {
 	int bufferlen;
 	int i;
-	//return NULL; /* remove this line */
 	while (1)
 	{
 		if (timeToFinish())
 		{
 			return NULL;
 		}
-		//pthread_mutex_lock(&mut);
+		//lock
 		sem_wait(&sem);
 		/* storing this prevents having to recalculate it in the loop */
 		bufferlen = strlen(buffer);
@@ -320,14 +266,12 @@ void *degrouper(void *arg)
 				if(afterStoring)
 				{
 					remainderOffset = i;
-					//printf("start:%d remainder:%d \n",startOffset, remainderOffset);
 					afterStoring = afterBracket = 0;
 					char temp[BUF_SIZE];
 				        strcpy(temp, &buffer[remainderOffset+1]);	
 					strcpy(&buffer[remainderOffset],temp);
 					strcpy(temp, &buffer[startOffset+1]);
 					strcpy(&buffer[startOffset], temp);
-					//printf("DEG%s \n",buffer);
 					num_ops ++;
 					job_attempt[2] = 0;
 					break;
@@ -338,17 +282,15 @@ void *degrouper(void *arg)
 			else
 			{
 				afterBracket = afterStoring = 0;
-				//startOffset = remainderOffset = -1;
 			}
 
 
 		}
+		//job attempted
 		job_attempt[2] ++;
+		//unlock
 		sem_post(&sem);
-		//pthread_mutex_unlock(&mut);
 		sched_yield();
-		//sleep(1);
-		// something missing?
 	}
 }
 
@@ -363,7 +305,6 @@ void *sentinel(void *arg)
 	char numberBuffer[20];
 	int bufferlen;
 	int i;
-	//return NULL; /* remove this line */
 
 	while (1) {
 
@@ -371,9 +312,8 @@ void *sentinel(void *arg)
 		if (timeToFinish()) {
 			return NULL;
 		}
-
+		//lock
 		sem_wait(&sem);
-		//pthread_mutex_lock(&mut);
 		/* storing this prevents having to recalculate it in the loop */
 		bufferlen = strlen(buffer);
 
@@ -392,14 +332,13 @@ void *sentinel(void *arg)
 					break;
 				}
 			} else if (!isNumeric(buffer[i])) {
+				//job attempted
 				job_attempt[3] ++;
 				int isStuck = 0, count = 0;
 				for(int i=0;i<4;i++)
 				{
-					//printf("JOB_ATTEMPT: ");
 					if(job_attempt[i] > 5)
 					{
-						//printf("[%d] = %d ",i,job_attempt[i]);
 						count ++;
 						if(count==4)
 						{
@@ -408,8 +347,6 @@ void *sentinel(void *arg)
 						}
 
 					}
-					
-					//printf("\n");
 				}
 				if(isStuck)
 				{
@@ -417,15 +354,15 @@ void *sentinel(void *arg)
 					exit(EXIT_FAILURE);
 				}
 				break;
-			} else {
+			} else 
+			{
 				numberBuffer[i] = buffer[i];
 			}
 		}
-		//pthread_mutex_unlock(&mut);
+		//unlock
 		sem_post(&sem);
 		sched_yield();
 		usleep(100);
-		// something missing?
 	}
 }
 
@@ -461,11 +398,9 @@ void *reader(void *arg)
 			sched_yield();// spinwaiting
 		}
 		sem_wait(&sem);
-		//pthread_mutex_lock(&mut);
 		/* we can add another expression now */
 		strcat(buffer, tBuffer);
 		strcat(buffer, ";");
-		//printf("READ%s \n",buffer);
 		sem_post(&sem);
 		//pthread_mutex_unlock(&mut);
 		/* Stop when user enters '.' */

@@ -200,9 +200,9 @@ int run_smp3_tests(int argc, char **argv)
     };
     int result = run_testrunner(argc, argv, tests,
 				sizeof(tests) / sizeof(testentry_t));
-   // unlink("smp3.in");
-   // unlink("smp3.out");
-   // unlink("smp3.err");
+    unlink("smp3.in");
+    unlink("smp3.out");
+    unlink("smp3.err");
     return result;
 }
 
